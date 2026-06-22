@@ -1,0 +1,18 @@
+{
+  "name": "medigo-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node node-build.js",
+    "start": "node node-build.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.5.0",
+    "razorpay": "^2.0.12"
+  }
+}

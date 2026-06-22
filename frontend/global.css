@@ -1,0 +1,70 @@
+/** @import must precede all other statements */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 184 39% 96%;
+    --foreground: 210 16% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 16% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 16% 15%;
+    --primary: 179 67% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 174 60% 44%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 204 24% 94%;
+    --muted-foreground: 210 16% 45%;
+    --accent: 176 71% 35%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 16% 90%;
+    --input: 210 16% 98%;
+    --ring: 179 67% 32%;
+    --radius: 1rem;
+  }
+
+  body {
+    @apply min-h-screen bg-[hsl(var(--background))] font-sans text-[hsl(var(--foreground))];
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  :where(p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th) {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  ::selection {
+    background: rgba(16, 121, 113, 0.18);
+  }
+}
+
+@layer utilities {
+  .text-foreground {
+    color: hsl(var(--foreground));
+  }
+
+  .bg-background {
+    background-color: hsl(var(--background));
+  }
+
+  .border-border {
+    border-color: hsl(var(--border));
+  }
+}
