@@ -1,11 +1,11 @@
 const crypto = require("crypto");
+const Order = require("../models/Order");
 
-// In-memory store for orders
+// In-memory store for legacy simulated orders
 const orders = new Map();
 
 /**
- * Simulates delivery tracking updates for mock orders.
- * @param {string} localId - The local order ID.
+ * Simulates route tracking coordinates updates in memory for mock orders.
  */
 function startDeliverySimulation(localId) {
   const route = [
@@ -16,7 +16,7 @@ function startDeliverySimulation(localId) {
 
   let idx = 0;
 
-  const iv = setInterval(() => {
+  const iv = setInterval(async () => {
     const r = orders.get(localId);
     if (!r) return clearInterval(iv);
 
@@ -26,6 +26,20 @@ function startDeliverySimulation(localId) {
     if (idx >= route.length) {
       r.status = "delivered";
       clearInterval(iv);
+
+      // Auto-update MongoDB orderStatus to Delivered if it matches ObjectId format
+      if (localId.match(/^[0-9a-fA-F]{24}$/)) {
+        try {
+          const dbOrder = await Order.findById(localId);
+          if (dbOrder) {
+            dbOrder.orderStatus = "Delivered";
+            await dbOrder.save();
+            console.log(`[payments] Auto-marked MongoDB Order ${localId} as Delivered`);
+          }
+        } catch (err) {
+          console.error("[payments] Error updating auto-delivery status:", err);
+        }
+      }
     }
 
     idx++;
@@ -33,13 +47,24 @@ function startDeliverySimulation(localId) {
 }
 
 /**
- * Creates a new order (integrates with Razorpay if keys are present, otherwise uses a demo mode fallback).
- * @param {number|string} amount - The transaction amount.
- * @param {string} [currency="INR"] - The currency of the transaction.
+ * Creates a new Razorpay order.
+ * @param {string} [orderId] - Optional Mongoose Order ID.
+ * @param {number|string} [amount] - Fallback transaction amount.
+ * @param {string} [currency="INR"] - The currency code.
  */
-const createOrderService = async (amount, currency = "INR") => {
-  const numericAmount = Math.max(1, Number(amount) || 0);
-  const localId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+const createOrderService = async (orderId, amount, currency = "INR") => {
+  let finalAmount = Number(amount) || 0;
+  let receiptId = orderId ? orderId.toString() : `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+  // If a Mongoose order is specified, load its actual amount
+  if (orderId) {
+    const dbOrder = await Order.findById(orderId);
+    if (!dbOrder) {
+      throw new Error(`Order not found with ID: ${orderId}`);
+    }
+    // Mongoose stores amount in Rupees, Razorpay expects paise (amount * 100)
+    finalAmount = dbOrder.totalAmount * 100;
+  }
 
   const keyId =
     process.env.RZP_KEY_ID ||
@@ -66,60 +91,54 @@ const createOrderService = async (amount, currency = "INR") => {
     });
 
     const rzpOrder = await rzp.orders.create({
-      amount: numericAmount, // amount in the smallest currency unit (e.g. paise)
+      amount: Math.round(finalAmount),
       currency,
-      receipt: localId,
+      receipt: receiptId,
     });
 
     const record = {
-      id: localId,
-      amount: numericAmount,
+      id: receiptId,
+      amount: finalAmount,
       currency,
       status: "created",
       rzpOrderId: rzpOrder.id,
       delivery: null,
     };
-
-    orders.set(localId, record);
+    orders.set(receiptId, record);
 
     return {
-      orderId: localId,
+      orderId: receiptId,
       rzpOrder,
       keyId,
     };
   }
 
-  // Fallback demo mode order representation
+  // Fallback mock order representation
   const fakeOrder = {
-    id: localId,
-    amount: numericAmount,
+    id: receiptId,
+    amount: finalAmount,
     currency,
   };
 
   const fakeRecord = {
-    id: localId,
-    amount: numericAmount,
+    id: receiptId,
+    amount: finalAmount,
     currency,
     status: "created",
     rzpOrderId: null,
     delivery: null,
   };
-
-  orders.set(localId, fakeRecord);
+  orders.set(receiptId, fakeRecord);
 
   return {
-    orderId: localId,
+    orderId: receiptId,
     rzpOrder: fakeOrder,
     keyId: null,
   };
 };
 
 /**
- * Validates the signature of a transaction and sets status to paid.
- * @param {string} orderId - The local order ID.
- * @param {string} razorpayOrderId - The Razorpay order ID.
- * @param {string} razorpayPaymentId - The Razorpay payment ID.
- * @param {string} razorpaySignature - The signature to be validated.
+ * Validates the signature of a transaction and marks payment status to paid.
  */
 const verifyPaymentService = async (orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature) => {
   const keySecret =
@@ -133,11 +152,7 @@ const verifyPaymentService = async (orderId, razorpayOrderId, razorpayPaymentId,
     throw new Error("Order ID is required");
   }
 
-  const record = orders.get(orderId);
-  if (!record) {
-    throw new Error("Order not found");
-  }
-
+  // 1. Verify cryptographic signature if Razorpay keys are configured
   if (keySecret && razorpayOrderId && razorpayPaymentId && razorpaySignature) {
     const expected = crypto
       .createHmac("sha256", keySecret)
@@ -145,12 +160,30 @@ const verifyPaymentService = async (orderId, razorpayOrderId, razorpayPaymentId,
       .digest("hex");
 
     if (expected !== razorpaySignature) {
-      throw new Error("Invalid signature");
+      if (orderId.match(/^[0-9a-fA-F]{24}$/)) {
+        await Order.findByIdAndUpdate(orderId, { paymentStatus: "failed" });
+      }
+      throw new Error("Signature verification failed: payment invalid");
     }
   }
 
-  record.status = "paid";
-  orders.set(orderId, record);
+  // 2. Update Mongoose Order status to paid and Confirmed
+  if (orderId.match(/^[0-9a-fA-F]{24}$/)) {
+    const dbOrder = await Order.findById(orderId);
+    if (dbOrder) {
+      dbOrder.paymentStatus = "paid";
+      dbOrder.orderStatus = "Confirmed";
+      await dbOrder.save();
+      console.log(`[payments] Verified and updated paymentStatus to paid for order ${orderId}`);
+    }
+  }
+
+  // 3. Update legacy in-memory tracking status
+  const record = orders.get(orderId);
+  if (record) {
+    record.status = "paid";
+    orders.set(orderId, record);
+  }
 
   // Start simulated delivery updates
   startDeliverySimulation(orderId);
@@ -159,12 +192,10 @@ const verifyPaymentService = async (orderId, razorpayOrderId, razorpayPaymentId,
 };
 
 /**
- * Gets details of a stored order.
- * @param {string} orderId - The order ID.
+ * Get details of stored legacy simulated order.
  */
 const getOrderService = (orderId) => {
-  const record = orders.get(orderId);
-  return record || null;
+  return orders.get(orderId) || null;
 };
 
 module.exports = {

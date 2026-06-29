@@ -5,12 +5,12 @@ const { createOrderService, verifyPaymentService, getOrderService } = require(".
  */
 const createOrder = async (req, res, next) => {
   try {
-    const { amount, currency } = req.body;
-    if (!amount) {
-      return res.status(400).json({ error: "Amount is required" });
+    const { orderId, amount, currency } = req.body;
+    if (!orderId && !amount) {
+      return res.status(400).json({ error: "Either orderId or amount is required" });
     }
 
-    const orderData = await createOrderService(amount, currency);
+    const orderData = await createOrderService(orderId, amount, currency);
     return res.status(200).json(orderData);
   } catch (err) {
     next(err);
