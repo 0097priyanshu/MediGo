@@ -7,12 +7,13 @@ const {
   updateMedicine,
   deleteMedicine,
 } = require("../controllers/medicineController");
+const { protect, admin } = require("../middleware/authMiddleware");
 
 // CRUD operations on Medicines
 router.get("/", getMedicines);
 router.get("/:id", getMedicineById);
-router.post("/", createMedicine);
-router.put("/:id", updateMedicine);
-router.delete("/:id", deleteMedicine);
+router.post("/", protect, admin, createMedicine);
+router.put("/:id", protect, admin, updateMedicine);
+router.delete("/:id", protect, admin, deleteMedicine);
 
 module.exports = router;

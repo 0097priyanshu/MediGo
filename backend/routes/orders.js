@@ -6,7 +6,7 @@ const {
   getOrderById,
   updateOrderStatus,
 } = require("../controllers/orderController");
-const { protect } = require("../middleware/authMiddleware");
+const { protect, admin } = require("../middleware/authMiddleware");
 
 // Authentication protected order endpoints
 router.use(protect);
@@ -14,6 +14,6 @@ router.use(protect);
 router.post("/", createOrder);
 router.get("/", getOrders);
 router.get("/:id", getOrderById);
-router.patch("/:id/status", updateOrderStatus);
+router.patch("/:id/status", admin, updateOrderStatus);
 
 module.exports = router;
