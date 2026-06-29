@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import SelectPharmacy from "./pages/SelectPharmacy";
 import BrowseProducts from "./pages/BrowseProducts";
 import Cart from "./pages/Cart";
+import TrackOrder from "./pages/TrackOrder";
 import NotFound from "./pages/NotFound";
 
 const AppRoutes = () => (
@@ -15,6 +16,7 @@ const AppRoutes = () => (
     <Route path="/pharmacies" element={<SelectPharmacy />} />
     <Route path="/browse/:pharmacyId" element={<BrowseProducts />} />
     <Route path="/cart" element={<Cart />} />
+    <Route path="/track/:orderId" element={<TrackOrder />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
