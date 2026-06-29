@@ -3,6 +3,7 @@ const router = express.Router();
 
 const authRoutes = require("./auth");
 const paymentRoutes = require("./payments");
+const pharmaciesRoutes = require("./pharmacies");
 const { getOrderStatus } = require("../controllers/paymentController");
 const { handleChat } = require("../controllers/chatController");
 const { handleDemo } = require("../controllers/demoController");
@@ -17,6 +18,7 @@ router.get("/ping", (req, res) => {
 // Mounted sub-routers
 router.use("/auth", authRoutes);
 router.use("/payments", paymentRoutes);
+router.use("/pharmacies", pharmaciesRoutes);
 
 // Shared/standalone endpoints
 router.get("/order-status/:id", getOrderStatus);
