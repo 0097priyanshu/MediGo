@@ -1,0 +1,27 @@
+const express = require("express");
+const router = express.Router();
+
+const authRoutes = require("./auth");
+const paymentRoutes = require("./payments");
+const { getOrderStatus } = require("../controllers/paymentController");
+const { handleChat } = require("../controllers/chatController");
+const { handleDemo } = require("../controllers/demoController");
+const { getEnvStatus } = require("../controllers/envController");
+
+// API status ping route
+router.get("/ping", (req, res) => {
+  const ping = process.env.PING_MESSAGE ?? "ping";
+  return res.json({ message: ping });
+});
+
+// Mounted sub-routers
+router.use("/auth", authRoutes);
+router.use("/payments", paymentRoutes);
+
+// Shared/standalone endpoints
+router.get("/order-status/:id", getOrderStatus);
+router.post("/chat", handleChat);
+router.get("/demo", handleDemo);
+router.get("/_env", getEnvStatus);
+
+module.exports = router;

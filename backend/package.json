@@ -1,7 +1,7 @@
 {
   "name": "medigo-backend",
   "private": true,
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "node node-build.js",
     "start": "node node-build.js"

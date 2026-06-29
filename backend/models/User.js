@@ -1,19 +1,14 @@
-import mongoose, { Schema, Document } from "mongoose";
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
-export interface IUser extends Document {
-  name;
-  email;
-  password;
-}
-
-const userSchema = new Schema<IUser>({
-  name{ type, required},
-  email{ type, unique, required},
-  password{ type, required},
+// User schema definition
+const userSchema = new Schema({
+  name: { type: String, required: true },
+  email: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
 });
 
 // Avoid model overwrite errors during hot-reload
-const User = (mongoose.models && (mongoose.models).User) ? (mongoose.models).User userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
-export { User };
-export default User;
+module.exports = User;
