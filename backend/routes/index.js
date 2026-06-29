@@ -5,6 +5,7 @@ const authRoutes = require("./auth");
 const paymentRoutes = require("./payments");
 const pharmaciesRoutes = require("./pharmacies");
 const medicinesRoutes = require("./medicines");
+const ordersRoutes = require("./orders");
 const { getOrderStatus } = require("../controllers/paymentController");
 const { handleChat } = require("../controllers/chatController");
 const { handleDemo } = require("../controllers/demoController");
@@ -21,6 +22,7 @@ router.use("/auth", authRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/pharmacies", pharmaciesRoutes);
 router.use("/medicines", medicinesRoutes);
+router.use("/orders", ordersRoutes);
 
 // Shared/standalone endpoints
 router.get("/order-status/:id", getOrderStatus);
