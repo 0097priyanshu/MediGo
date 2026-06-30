@@ -78,14 +78,22 @@ const getOrders = async (req, res, next) => {
   try {
     const filter = {};
 
-    // Standard users can only view their own orders
-    if (req.user.role !== "admin") {
+    // Filter logic based on user role
+    if (req.user.role === "store" && req.user.isApproved) {
+      // Find all medicines that belong to this store's pharmacy
+      const storeMeds = await Medicine.find({ pharmacyId: req.user.pharmacyId });
+      const storeMedIds = storeMeds.map(m => m._id);
+      
+      // Filter orders containing these medicines
+      filter["items.medicineId"] = { $in: storeMedIds };
+    } else if (req.user.role !== "admin") {
+      // Standard customers only view their own orders
       filter.userId = req.user._id;
     }
 
     const orders = await Order.find(filter)
       .populate("userId", "name email role")
-      .populate("items.medicineId", "name category price imageUrl")
+      .populate("items.medicineId", "name category price imageUrl pharmacyId")
       .sort({ createdAt: -1 });
 
     return res.status(200).json(orders);
@@ -102,15 +110,23 @@ const getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate("userId", "name email role")
-      .populate("items.medicineId", "name category price imageUrl");
+      .populate("items.medicineId", "name category price imageUrl pharmacyId");
 
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // Authorization check: must be owner or admin
-    if (req.user.role !== "admin" && order.userId._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: "Access denied: you do not own this order" });
+    // Authorization check: must be owner, admin, or the store owner linked to one of the medicines
+    let isStoreOwner = false;
+    if (req.user.role === "store" && req.user.isApproved) {
+      isStoreOwner = order.items.some(item => 
+        item.medicineId && item.medicineId.pharmacyId && 
+        item.medicineId.pharmacyId.toString() === req.user.pharmacyId.toString()
+      );
+    }
+
+    if (req.user.role !== "admin" && !isStoreOwner && order.userId._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Access denied: you do not have permission to view this order" });
     }
 
     return res.status(200).json(order);
@@ -126,7 +142,16 @@ const getOrderById = async (req, res, next) => {
 const updateOrderStatus = async (req, res, next) => {
   try {
     const { orderStatus } = req.body;
-    const validStatuses = ["Placed", "Confirmed", "Packed", "OutForDelivery", "Delivered"];
+    const validStatuses = [
+      "Placed",
+      "Confirmed",
+      "Packed",
+      "Assigned",
+      "Picked Up",
+      "Out For Delivery",
+      "OutForDelivery",
+      "Delivered"
+    ];
 
     if (!orderStatus || !validStatuses.includes(orderStatus)) {
       return res.status(400).json({ error: `Invalid order status. Must be one of: ${validStatuses.join(", ")}` });
@@ -135,6 +160,22 @@ const updateOrderStatus = async (req, res, next) => {
     const order = await Order.findById(req.params.id);
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Authorization check: must be admin or store owner linked to this order
+    let isStoreOwner = false;
+    if (req.user.role === "store" && req.user.isApproved) {
+      // Find all medicines in this store's pharmacy
+      const storeMeds = await Medicine.find({ pharmacyId: req.user.pharmacyId });
+      const storeMedIds = storeMeds.map(m => m._id.toString());
+      
+      isStoreOwner = order.items.some(item => 
+        storeMedIds.includes(item.medicineId.toString())
+      );
+    }
+
+    if (req.user.role !== "admin" && !isStoreOwner) {
+      return res.status(403).json({ error: "Access denied: you do not have permission to update this order" });
     }
 
     order.orderStatus = orderStatus;

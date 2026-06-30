@@ -1,9 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { getAdminStats } = require("../controllers/adminController");
-const { protect, admin } = require("../middleware/authMiddleware");
+const { getStoreRequests, approveStore, rejectStore } = require("../controllers/adminController");
+const { protect, adminMiddleware } = require("../middleware/authMiddleware");
 
-// Stats endpoint protected by token and role checks
-router.get("/stats", protect, admin, getAdminStats);
+// Route protection: requires login AND admin role
+router.get("/store-requests", protect, adminMiddleware, getStoreRequests);
+router.patch("/store/:id/approve", protect, adminMiddleware, approveStore);
+router.patch("/store/:id/reject", protect, adminMiddleware, rejectStore);
 
 module.exports = router;

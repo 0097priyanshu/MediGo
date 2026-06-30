@@ -14,18 +14,24 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import RoleSelection from "./pages/RoleSelection";
+import StoreRegistration from "./pages/StoreRegistration";
+import StoreDashboard from "./pages/StoreDashboard";
+import DeliveryDashboard from "./pages/DeliveryDashboard";
 import NotFound from "./pages/NotFound";
 
 const AppRoutes = () => (
   <Routes>
     {/* Public Routes */}
     <Route path="/" element={<Home />} />
+    <Route path="/home" element={<Home />} />
     <Route path="/pharmacies" element={<SelectPharmacy />} />
     <Route path="/browse/:pharmacyId" element={<BrowseProducts />} />
     <Route path="/cart" element={<Cart />} />
     <Route path="/track/:orderId" element={<TrackOrder />} />
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
+    <Route path="/role-selection" element={<RoleSelection />} />
     
     {/* Protected Routes */}
     <Route
@@ -33,6 +39,30 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <Profile />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/store-registration"
+      element={
+        <ProtectedRoute>
+          <StoreRegistration />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/store-dashboard"
+      element={
+        <ProtectedRoute>
+          <StoreDashboard />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/delivery-dashboard"
+      element={
+        <ProtectedRoute>
+          <DeliveryDashboard />
         </ProtectedRoute>
       }
     />
@@ -62,4 +92,3 @@ const App = () => (
 
 const root = createRoot(document.getElementById("root"));
 root.render(<App />);
-

@@ -8,7 +8,7 @@ const orderItemSchema = new Schema({
   price: { type: Number, required: true, min: 0 },
 });
 
-// Order schema definition
+// Order schema definition supporting delivery partner tracking
 const orderSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   items: { type: [orderItemSchema], required: true },
@@ -16,10 +16,20 @@ const orderSchema = new Schema({
   paymentStatus: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
   orderStatus: {
     type: String,
-    enum: ["Placed", "Confirmed", "Packed", "OutForDelivery", "Delivered"],
+    enum: [
+      "Placed",
+      "Confirmed",
+      "Packed",
+      "Assigned",
+      "Picked Up",
+      "Out For Delivery",
+      "OutForDelivery",
+      "Delivered"
+    ],
     default: "Placed",
   },
   deliveryAddress: { type: String, required: true },
+  deliveryPartnerId: { type: Schema.Types.ObjectId, ref: "User" },
   createdAt: { type: Date, default: Date.now },
 });
 

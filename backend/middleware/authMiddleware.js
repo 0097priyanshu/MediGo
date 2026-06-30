@@ -46,8 +46,49 @@ const admin = (req, res, next) => {
   }
 };
 
+/**
+ * Role-specific middlewares
+ */
+const customerMiddleware = (req, res, next) => {
+  if (req.user && req.user.role === "customer") {
+    next();
+  } else {
+    return res.status(403).json({ error: "Access denied: Customer role required" });
+  }
+};
+
+const storeMiddleware = (req, res, next) => {
+  if (req.user && req.user.role === "store") {
+    if (!req.user.isApproved) {
+      return res.status(403).json({ error: "Access denied: Store owner not approved yet" });
+    }
+    next();
+  } else {
+    return res.status(403).json({ error: "Access denied: Store Owner role required" });
+  }
+};
+
+const deliveryMiddleware = (req, res, next) => {
+  if (req.user && req.user.role === "delivery") {
+    next();
+  } else {
+    return res.status(403).json({ error: "Access denied: Delivery Partner role required" });
+  }
+};
+
+const adminMiddleware = (req, res, next) => {
+  if (req.user && req.user.role === "admin") {
+    next();
+  } else {
+    return res.status(403).json({ error: "Access denied: Admin role required" });
+  }
+};
+
 module.exports = {
   protect,
   admin,
+  customerMiddleware,
+  storeMiddleware,
+  deliveryMiddleware,
+  adminMiddleware,
 };
-

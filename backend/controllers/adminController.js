@@ -1,40 +1,102 @@
-const Order = require("../models/Order");
-const Medicine = require("../models/Medicine");
+const User = require("../models/User");
 const Pharmacy = require("../models/Pharmacy");
 
 /**
- * Fetch aggregation statistics for the admin dashboard.
- * GET /api/admin/stats
+ * Returns all store registration requests that are pending approval.
+ * GET /api/admin/store-requests
  */
-const getAdminStats = async (req, res, next) => {
+const getStoreRequests = async (req, res, next) => {
   try {
-    const totalOrders = await Order.countDocuments({});
-    const medicinesCount = await Medicine.countDocuments({});
-    const pharmaciesCount = await Pharmacy.countDocuments({});
+    // Find all store users who have submitted store info (shopName is set) and are not approved yet
+    const stores = await User.find({ 
+      role: "store", 
+      isApproved: false, 
+      shopName: { $exists: true, $ne: null } 
+    }).select("-password");
 
-    // Calculate total revenue from all orders
-    const orders = await Order.find({});
-    const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    return res.status(200).json({ stores });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    // Get 5 most recent orders with populated user/item details
-    const recentOrders = await Order.find({})
-      .populate("userId", "name email")
-      .populate("items.medicineId", "name category price")
-      .sort({ createdAt: -1 })
-      .limit(5);
+/**
+ * Approves a pending store owner.
+ * Automatically creates a Pharmacy record in the DB and links its ID to the user.
+ * PATCH /api/admin/store/:id/approve
+ */
+const approveStore = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const storeUser = await User.findById(id);
+    
+    if (!storeUser || storeUser.role !== "store") {
+      return res.status(404).json({ error: "Store owner request not found" });
+    }
 
-    return res.status(200).json({
-      totalOrders,
-      totalRevenue,
-      medicinesCount,
-      pharmaciesCount,
-      recentOrders,
+    // Generate and register Pharmacy in DB if not already present
+    let pharmacyId = storeUser.pharmacyId;
+    if (!pharmacyId) {
+      const pharmacy = await Pharmacy.create({
+        name: storeUser.shopName,
+        address: storeUser.address || "Address Pending",
+        phone: storeUser.phone || "Phone Pending",
+        rating: 4.5,
+        isOpen: true,
+      });
+      pharmacyId = pharmacy._id;
+    }
+
+    storeUser.isApproved = true;
+    storeUser.pharmacyId = pharmacyId;
+    await storeUser.save();
+
+    return res.status(200).json({ 
+      message: "Store owner approved successfully", 
+      store: {
+        id: storeUser._id,
+        name: storeUser.name,
+        email: storeUser.email,
+        role: storeUser.role,
+        isApproved: storeUser.isApproved,
+        pharmacyId: storeUser.pharmacyId
+      }
     });
   } catch (err) {
     next(err);
   }
 };
 
+/**
+ * Rejects a pending store owner. Resets their shop details so they can re-apply.
+ * PATCH /api/admin/store/:id/reject
+ */
+const rejectStore = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const storeUser = await User.findById(id);
+    
+    if (!storeUser || storeUser.role !== "store") {
+      return res.status(404).json({ error: "Store owner request not found" });
+    }
+
+    // Reset details to allow re-application
+    storeUser.shopName = undefined;
+    storeUser.licenseNumber = undefined;
+    storeUser.gstNumber = undefined;
+    storeUser.phone = undefined;
+    storeUser.address = undefined;
+    storeUser.isApproved = false;
+    await storeUser.save();
+
+    return res.status(200).json({ message: "Store request rejected and details reset successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
-  getAdminStats,
+  getStoreRequests,
+  approveStore,
+  rejectStore,
 };

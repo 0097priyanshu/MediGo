@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, role) => {
     setError(null);
     setLoading(true);
     try {
@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, role }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -108,6 +108,62 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (credential, role) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ credential, role }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Google sign-in failed");
+      }
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitStoreDetails = async (details) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const storedToken = localStorage.getItem("token") || token;
+      const res = await fetch("/api/auth/store-details", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${storedToken}`,
+        },
+        body: JSON.stringify(details),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Submitting store details failed");
+      }
+      setUser(data.user);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -116,8 +172,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const getCurrentUser = async () => {
-    if (!token) return null;
-    await fetchUserProfile(token);
+    const storedToken = localStorage.getItem("token") || token;
+    if (!storedToken) return null;
+    await fetchUserProfile(storedToken);
     return user;
   };
 
@@ -131,6 +188,8 @@ export const AuthProvider = ({ children }) => {
         setError,
         login,
         register,
+        loginWithGoogle,
+        submitStoreDetails,
         logout,
         getCurrentUser,
       }}
