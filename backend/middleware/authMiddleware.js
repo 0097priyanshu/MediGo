@@ -1,7 +1,5 @@
-const jwt = require("jsonwebtoken");
+const { verifyToken } = require("../utils/jwt");
 const User = require("../models/User");
-
-const JWT_SECRET = process.env.JWT_SECRET ?? "8sdf67df78df7dfsd98f7dsa9";
 
 /**
  * Middleware to authenticate requests using JWT tokens.
@@ -20,7 +18,7 @@ const protect = async (req, res, next) => {
     }
 
     // Verify token signature
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = verifyToken(token);
 
     // Fetch user details from database (excluding the password)
     const user = await User.findById(decoded.id).select("-password");
@@ -52,3 +50,4 @@ module.exports = {
   protect,
   admin,
 };
+

@@ -1,8 +1,6 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-
-const JWT_SECRET = process.env.JWT_SECRET ?? "8sdf67df78df7dfsd98f7dsa9";
+const { generateToken } = require("../utils/jwt");
 
 /**
  * Registers a new user.
@@ -42,8 +40,12 @@ const register = async (req, res, next) => {
       role: user.role,
     };
 
+    // Generate JWT token containing payload: id and role
+    const token = generateToken({ id: user._id, role: user.role });
+
     return res.status(201).json({
       message: "User registered successfully",
+      token,
       user: createdUser,
     });
   } catch (err) {
@@ -77,11 +79,7 @@ const login = async (req, res, next) => {
     }
 
     // Generate JWT token containing payload: id and role
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const token = generateToken({ id: user._id, role: user.role });
 
     return res.status(200).json({
       message: "Login successful",
@@ -118,3 +116,4 @@ module.exports = {
   login,
   getProfile,
 };
+

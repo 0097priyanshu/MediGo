@@ -6,6 +6,30 @@ const Card = ({ children, className = "", ...props }) => {
   );
 };
 
+const CardHeader = ({ children, className = "", ...props }) => {
+  return (
+    <div className={`flex flex-col space-y-1.5 p-6 ${className}`} {...props}>
+      {children}
+    </div>
+  );
+};
+
+const CardTitle = ({ children, className = "", ...props }) => {
+  return (
+    <h3 className={`text-2xl font-semibold leading-none tracking-tight ${className}`} {...props}>
+      {children}
+    </h3>
+  );
+};
+
+const CardDescription = ({ children, className = "", ...props }) => {
+  return (
+    <p className={`text-sm text-muted-foreground ${className}`} {...props}>
+      {children}
+    </p>
+  );
+};
+
 const CardContent = ({ children, className = "", ...props }) => {
   return (
     <div className={className} {...props}>
@@ -14,4 +38,5 @@ const CardContent = ({ children, className = "", ...props }) => {
   );
 };
 
-export { Card, CardContent };
+export { Card, CardHeader, CardTitle, CardDescription, CardContent };
+
