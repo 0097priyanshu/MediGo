@@ -93,6 +93,7 @@ const getOrders = async (req, res, next) => {
 
     const orders = await Order.find(filter)
       .populate("userId", "name email role")
+      .populate("deliveryPartnerId", "name email profileImage phone")
       .populate("items.medicineId", "name category price imageUrl pharmacyId")
       .sort({ createdAt: -1 });
 
@@ -110,6 +111,7 @@ const getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate("userId", "name email role")
+      .populate("deliveryPartnerId", "name email profileImage phone")
       .populate("items.medicineId", "name category price imageUrl pharmacyId");
 
     if (!order) {

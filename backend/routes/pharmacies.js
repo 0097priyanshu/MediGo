@@ -6,7 +6,13 @@ const {
   createPharmacy,
   updatePharmacy,
   deletePharmacy,
+  getNearbyPharmacies,
+  getPharmacyMedicines,
 } = require("../controllers/pharmacyController");
+
+// Nearby search & custom discovery operations on Pharmacies
+router.get("/nearby", getNearbyPharmacies);
+router.get("/:id/medicines", getPharmacyMedicines);
 
 // CRUD operations on Pharmacies
 router.get("/", getPharmacies);

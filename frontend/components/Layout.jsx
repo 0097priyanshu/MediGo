@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, User as UserIcon, LogOut, LayoutDashboard, Truck, ClipboardList, Package, Home } from "lucide-react";
+import { ShoppingCart, User as UserIcon, LogOut, LayoutDashboard, Truck, ClipboardList, Package, Home, MapPin } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -22,6 +22,7 @@ const Layout = ({ children }) => {
       return [
         { path: "/", label: "Home", icon: Home },
         { path: "/pharmacies", label: "Medicines", icon: Package },
+        { path: "/nearby", label: "Nearby Map", icon: MapPin },
       ];
     }
 
@@ -30,6 +31,7 @@ const Layout = ({ children }) => {
         return [
           { path: "/home", label: "Home", icon: Home },
           { path: "/pharmacies", label: "Medicines", icon: Package },
+          { path: "/nearby", label: "Nearby Map", icon: MapPin },
           { path: "/profile", label: "My Orders", icon: ClipboardList },
         ];
       case "store":

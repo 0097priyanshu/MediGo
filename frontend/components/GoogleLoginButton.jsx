@@ -23,10 +23,10 @@ const GoogleLoginButton = ({ onError }) => {
             try {
               // Retrieve selected role (stored temporarily)
               const pendingRole = localStorage.getItem("pending_role") || "customer";
-              
+
               // Post to loginWithGoogle in AuthContext
               const data = await loginWithGoogle(response.credential, pendingRole);
-              
+
               // Clean up temporary storage
               localStorage.removeItem("pending_role");
 

@@ -18,6 +18,7 @@ import RoleSelection from "./pages/RoleSelection";
 import StoreRegistration from "./pages/StoreRegistration";
 import StoreDashboard from "./pages/StoreDashboard";
 import DeliveryDashboard from "./pages/DeliveryDashboard";
+import NearbyPharmacies from "./pages/NearbyPharmacies";
 import NotFound from "./pages/NotFound";
 
 const AppRoutes = () => (
@@ -26,6 +27,7 @@ const AppRoutes = () => (
     <Route path="/" element={<Home />} />
     <Route path="/home" element={<Home />} />
     <Route path="/pharmacies" element={<SelectPharmacy />} />
+    <Route path="/nearby" element={<NearbyPharmacies />} />
     <Route path="/browse/:pharmacyId" element={<BrowseProducts />} />
     <Route path="/cart" element={<Cart />} />
     <Route path="/track/:orderId" element={<TrackOrder />} />

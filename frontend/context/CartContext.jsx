@@ -25,14 +25,20 @@ const CartProvider = ({ children }) => {
 
   // Adds a product to the cart or increments its quantity
   const addItem = (product) => {
+    const productId = product.id || product._id;
+    const normalizedProduct = {
+      ...product,
+      id: productId,
+    };
+
     setItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
+      const existing = prev.find((item) => item.id === productId);
       if (existing) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { ...normalizedProduct, quantity: 1 }];
     });
   };
 
