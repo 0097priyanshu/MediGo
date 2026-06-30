@@ -3,28 +3,26 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Resolve default leaflet marker icon bundling issues in Vite
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
+// ESM / CommonJS leaf default export polyfill
+const Leaflet = L && L.icon ? L : ((L && L.default) || L);
 
-// Configured default icon options
-let DefaultIcon = L.icon({
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
-
-// Custom colored icon for the user's current location pin (Red marker)
-const userLocationIcon = L.icon({
+// Custom colored icon for the user's location pin (Red marker)
+const userLocationIcon = Leaflet && Leaflet.icon ? Leaflet.icon({
   iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-  shadowUrl: markerShadow,
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-});
+}) : null;
+
+// Custom colored icon for the pharmacies (Blue marker)
+const pharmacyMarkerIcon = Leaflet && Leaflet.icon ? Leaflet.icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+}) : null;
 
 /**
  * Helper component to automatically re-center the map view when center coordinates change.
@@ -32,7 +30,7 @@ const userLocationIcon = L.icon({
 const MapUpdater = ({ center }) => {
   const map = useMap();
   useEffect(() => {
-    if (center) {
+    if (center && center[0] && center[1]) {
       map.setView(center, map.getZoom());
     }
   }, [center, map]);
@@ -44,7 +42,18 @@ const MapUpdater = ({ center }) => {
  * Displays user position and pharmacy indicators.
  */
 const PharmacyMap = ({ userCoords, pharmacies, onSelectPharmacy }) => {
-  const mapCenter = userCoords ? [userCoords.latitude, userCoords.longitude] : [28.6273, 77.3725]; // Noida Sector 62 fallback
+  const mapCenter = userCoords && userCoords.latitude && userCoords.longitude
+    ? [userCoords.latitude, userCoords.longitude]
+    : [28.6273, 77.3725]; // Noida Sector 62 fallback
+
+  // Fallback if Leaflet fails to load or bind
+  if (!Leaflet || !Leaflet.icon) {
+    return (
+      <div className="h-[400px] w-full flex items-center justify-center bg-slate-100 rounded-2xl text-slate-500 text-xs">
+        Map module error: Leaflet library failed to bind coordinates options.
+      </div>
+    );
+  }
 
   return (
     <div className="h-[400px] w-full rounded-2xl overflow-hidden shadow-md border relative z-10">
@@ -60,7 +69,7 @@ const PharmacyMap = ({ userCoords, pharmacies, onSelectPharmacy }) => {
         />
 
         {/* User location indicator pin */}
-        {userCoords && (
+        {userCoords && userCoords.latitude && userCoords.longitude && userLocationIcon && (
           <Marker position={[userCoords.latitude, userCoords.longitude]} icon={userLocationIcon}>
             <Popup>
               <div className="text-center font-bold text-slate-800 text-xs">
@@ -72,11 +81,11 @@ const PharmacyMap = ({ userCoords, pharmacies, onSelectPharmacy }) => {
 
         {/* Pharmacy partner location pins */}
         {pharmacies.map((pharmacy) => {
-          const phLat = pharmacy.latitude !== undefined ? pharmacy.latitude : 28.6273;
-          const phLon = pharmacy.longitude !== undefined ? pharmacy.longitude : 77.3725;
+          const phLat = pharmacy.latitude !== undefined && pharmacy.latitude !== null ? pharmacy.latitude : 28.6273;
+          const phLon = pharmacy.longitude !== undefined && pharmacy.longitude !== null ? pharmacy.longitude : 77.3725;
 
           return (
-            <Marker key={pharmacy._id} position={[phLat, phLon]}>
+            <Marker key={pharmacy._id} position={[phLat, phLon]} icon={pharmacyMarkerIcon}>
               <Popup>
                 <div className="p-1 space-y-1">
                   <h4 className="font-bold text-slate-800 text-sm leading-tight">

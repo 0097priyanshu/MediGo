@@ -1,11 +1,83 @@
-import { useState } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import CartItem from "@/components/CartItem";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Trash2, ShoppingBag, CreditCard, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Trash2, ShoppingBag, CreditCard, Loader2, AlertCircle, MapPin } from "lucide-react";
+
+// React Leaflet imports for address coordinate selection mapping
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import * as L from "leaflet";
+
+// Leaflet map re-centering helper
+const MapUpdater = ({ center }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (center && center[0] && center[1]) {
+      map.setView(center, map.getZoom());
+    }
+  }, [center, map]);
+  return null;
+};
+
+// Custom colored icon for the user's selected address marker (Red marker pin)
+const addressPinIcon = L.icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
+// Mini map interactive selector component
+const LocationSelectorMap = ({ lat, lng, onChangeCoords }) => {
+  const MapEvents = () => {
+    useMapEvents({
+      click(e) {
+        onChangeCoords(e.latlng.lat, e.latlng.lng);
+      },
+    });
+    return null;
+  };
+
+  const markerRef = useRef(null);
+  const eventHandlers = useMemo(
+    () => ({
+      dragend() {
+        const marker = markerRef.current;
+        if (marker != null) {
+          const latLng = marker.getLatLng();
+          onChangeCoords(latLng.lat, latLng.lng);
+        }
+      },
+    }),
+    [onChangeCoords]
+  );
+
+  return (
+    <div className="h-44 w-full rounded-xl overflow-hidden shadow-inner border mt-2 relative z-10">
+      <MapContainer
+        center={[lat, lng]}
+        zoom={15}
+        scrollWheelZoom={false}
+        className="h-full w-full"
+      >
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <Marker
+          draggable={true}
+          eventHandlers={eventHandlers}
+          position={[lat, lng]}
+          ref={markerRef}
+          icon={addressPinIcon}
+        />
+        <MapEvents />
+        <MapUpdater center={[lat, lng]} />
+      </MapContainer>
+    </div>
+  );
+};
 
 /**
  * Dynamically loads the Razorpay SDK script.
@@ -27,6 +99,7 @@ const loadRazorpayScript = () => {
 /**
  * Premium shopping cart page displaying selected medicines, order totals,
  * delivery address inputs, and Razorpay checkout gates.
+ * Now enriched with GPS location tracking and mapping address markers.
  */
 const Cart = () => {
   const { items, clearCart, total } = useCart();
@@ -34,11 +107,68 @@ const Cart = () => {
   const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
 
+  // Location selector states
+  const [detecting, setDetecting] = useState(false);
+  const [showMiniMap, setShowMiniMap] = useState(false);
+  const [mapCoords, setMapCoords] = useState({ lat: 28.6273, lng: 77.3725 }); // Noida default
+
   // Cost calculations
   const subtotal = total;
   const deliveryCharge = subtotal > 500 ? 0 : 50; // free delivery for orders above ₹500
   const discount = Math.floor(subtotal * 0.05); // 5% discount
   const finalTotal = subtotal + deliveryCharge - discount;
+
+  const reverseGeocode = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const displayName = data.display_name || `Latitude: ${latitude}, Longitude: ${longitude}`;
+        setDeliveryAddress(displayName);
+      } else {
+        setDeliveryAddress(`Latitude: ${latitude}, Longitude: ${longitude}`);
+      }
+    } catch (err) {
+      setDeliveryAddress(`Latitude: ${latitude}, Longitude: ${longitude}`);
+    }
+  };
+
+  const handleDetectLocation = () => {
+    setDetecting(true);
+    setCheckoutError("");
+
+    if (!navigator.geolocation) {
+      setCheckoutError("Geolocation is not supported by your browser.");
+      setDetecting(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const userLat = position.coords.latitude;
+        const userLon = position.coords.longitude;
+        setMapCoords({ lat: userLat, lng: userLon });
+        setShowMiniMap(true);
+        await reverseGeocode(userLat, userLon);
+        setDetecting(false);
+      },
+      (error) => {
+        console.warn("[Geolocation] Detect error:", error.message);
+        setCheckoutError("Location access blocked. Please type manually or drag marker.");
+        setDetecting(false);
+        // Show fallback Noida map
+        setShowMiniMap(true);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
+
+  const handleMarkerMove = async (lat, lng) => {
+    setMapCoords({ lat, lng });
+    await reverseGeocode(lat, lng);
+  };
 
   /**
    * Orchestrates the Checkout & Payment verification flow.
@@ -307,9 +437,25 @@ const Cart = () => {
                   )}
                 </div>
 
-                {/* Delivery Address input section */}
-                <div className="space-y-2 pt-2 border-t">
-                  <label className="block text-xs font-bold text-slate-500 uppercase">Delivery Address *</label>
+                {/* Delivery Address input section with Detect location pin */}
+                <div className="space-y-3 pt-2 border-t">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-bold text-slate-500 uppercase">Delivery Address *</label>
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      disabled={detecting}
+                      className="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 bg-teal-50 px-2.5 py-1.5 rounded-lg transition hover:bg-teal-100"
+                    >
+                      {detecting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <MapPin className="h-3.5 w-3.5" />
+                      )}
+                      Detect My Location
+                    </button>
+                  </div>
+                  
                   <textarea
                     rows="2"
                     required
@@ -318,6 +464,20 @@ const Cart = () => {
                     placeholder="Enter your complete home/office address"
                     className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-teal-700 outline-none resize-none"
                   />
+
+                  {/* Interactive Leaflet Mini Map Pin Marker Selector */}
+                  {showMiniMap && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-medium block">
+                        📍 Drag marker or click map to refine address location
+                      </span>
+                      <LocationSelectorMap
+                        lat={mapCoords.lat}
+                        lng={mapCoords.lng}
+                        onChangeCoords={handleMarkerMove}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Grand Total */}
@@ -353,3 +513,4 @@ const Cart = () => {
 };
 
 export default Cart;
+export { Cart };
