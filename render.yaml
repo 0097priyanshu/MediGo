@@ -9,14 +9,14 @@ services:
       - key: PORT
         value: 10000
       - key: MONGO_URL
-        placeholder: "mongodb+srv://user:pass@cluster.mongodb.net/medigo?retryWrites=true&w=majority"
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: RAZORPAY_key_id
-        placeholder: "rzp_test_..."
+        sync: false
       - key: RAZORPAY_live_key_secret
-        placeholder: "Your Razorpay secret key"
+        sync: false
       - key: GOOGLE_CLIENT_ID
-        placeholder: "Google Auth Client ID (Optional)"
+        sync: false
       - key: GOOGLE_CLIENT_SECRET
-        placeholder: "Google Auth Client Secret (Optional)"
+        sync: false
