@@ -69,7 +69,7 @@ const seedDatabase = async () => {
         category: "Cough & Fever",
         price: 85.00,
         stock: 75,
-        imageUrl: "https://onemg.gumlet.io/l_watermark_346,w_480,h_480/a_ignore,w_480,h_480,c_fit,q_auto,f_auto/0882c1c563424c8d849fe9de338ac474.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=300&auto=format&fit=crop",
       },
       {
         name: "Otrivin Nasal Spray",
@@ -77,7 +77,7 @@ const seedDatabase = async () => {
         category: "Cough & Fever",
         price: 110.00,
         stock: 90,
-        imageUrl: "https://onemg.gumlet.io/l_watermark_346,w_480,h_480/a_ignore,w_480,h_480,c_fit,q_auto,f_auto/cropped/zisdny6qsw3bujt5kb9r.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1602052446002-3c1aa327db04?w=300&auto=format&fit=crop",
       },
       {
         name: "Volini Pain Spray",
@@ -85,7 +85,7 @@ const seedDatabase = async () => {
         category: "Pain Relief",
         price: 140.00,
         stock: 50,
-        imageUrl: "https://onemg.gumlet.io/l_watermark_346,w_480,h_480/a_ignore,w_480,h_480,c_fit,q_auto,f_auto/cropped/hzatp1wstdbjifmhz1q6.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=300&auto=format&fit=crop",
       },
       {
         name: "Moov Pain Cream",
@@ -93,7 +93,7 @@ const seedDatabase = async () => {
         category: "Pain Relief",
         price: 95.00,
         stock: 60,
-        imageUrl: "https://onemg.gumlet.io/l_watermark_346,w_480,h_480/a_ignore,w_480,h_480,c_fit,q_auto,f_auto/cropped/agxgyqlk9r0hespwkaly.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1616679911721-ebd6e4149668?w=300&auto=format&fit=crop",
       },
       {
         name: "Limcee Vitamin C Chewables",
@@ -109,7 +109,7 @@ const seedDatabase = async () => {
         category: "Wellness & Vitamins",
         price: 22.00,
         stock: 140,
-        imageUrl: "https://onemg.gumlet.io/l_watermark_346,w_480,h_480/a_ignore,w_480,h_480,c_fit,q_auto,f_auto/0affb2fad15d4ab18e40f3f4c8b2bdfc.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1547489432-cf93fa6c71ee?w=300&auto=format&fit=crop",
       },
       {
         name: "Rejuvenating Multivitamin Syrup",
@@ -125,7 +125,7 @@ const seedDatabase = async () => {
         category: "First Aid & Care",
         price: 65.00,
         stock: 110,
-        imageUrl: "https://onemg.gumlet.io/l_watermark_346,w_480,h_480/a_ignore,w_480,h_480,c_fit,q_auto,f_auto/6da5d51f397a476eaadba25c1d433eea.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=300&auto=format&fit=crop",
       },
       {
         name: "Band-Aid Strips (20 Pack)",
@@ -149,7 +149,7 @@ const seedDatabase = async () => {
         category: "Stomach Care",
         price: 9.00,
         stock: 500,
-        imageUrl: "https://onemg.gumlet.io/l_watermark_346,w_480,h_480/a_ignore,w_480,h_480,c_fit,q_auto,f_auto/f8b83ca540ec48b48f7a964f0a19bf51.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1550572017-edd951b55104?w=300&auto=format&fit=crop",
       },
       {
         name: "Dabur Pudina Hara Pearls",
@@ -157,7 +157,7 @@ const seedDatabase = async () => {
         category: "Stomach Care",
         price: 25.00,
         stock: 180,
-        imageUrl: "https://onemg.gumlet.io/l_watermark_346,w_480,h_480/a_ignore,w_480,h_480,c_fit,q_auto,f_auto/dd55e6ee0f724cefab4f5aaaef8322cc.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=300&auto=format&fit=crop",
       },
       {
         name: "Antacid Liquid Gel (Mint)",
@@ -165,7 +165,7 @@ const seedDatabase = async () => {
         category: "Stomach Care",
         price: 120.00,
         stock: 80,
-        imageUrl: "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=300&auto=format&fit=crop",
+        imageUrl: "https://images.unsplash.com/photo-1527613426441-4da17471b66d?w=300&auto=format&fit=crop",
       }
     ];
 

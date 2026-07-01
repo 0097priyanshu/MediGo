@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: medigo-platform
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: MONGO_URL
+        placeholder: "mongodb+srv://user:pass@cluster.mongodb.net/medigo?retryWrites=true&w=majority"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RAZORPAY_key_id
+        placeholder: "rzp_test_..."
+      - key: RAZORPAY_live_key_secret
+        placeholder: "Your Razorpay secret key"
+      - key: GOOGLE_CLIENT_ID
+        placeholder: "Google Auth Client ID (Optional)"
+      - key: GOOGLE_CLIENT_SECRET
+        placeholder: "Google Auth Client Secret (Optional)"
